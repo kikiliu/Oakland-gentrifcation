@@ -45,13 +45,18 @@ def select_value_by_neighborhood(df, neighborhood, drop=[]):
     #df can be slice by date: df[20140101]
     return df
 
-@app.route('/oakland/<year>/<month>', methods=['GET'])
+def open_race_file(filepath):
+    df = pd.read_csv(filepath)
+    return df.fillna(0)
+
+@app.route('/oakland/homevalue/<year>/<month>', methods=['GET'])
 def homevalue_get(year,month):
     """get year-month and return homevalue"""
     path = create_filepath('Neighborhood_Zhvi_AllHomes.csv')
     df = open_neighbor_file(path)
     oak_df = get_data_by_state_city(df, 'CA', 'Oakland')
     neighbor_year_month = select_value_by_year_month(oak_df, year,month)
+    neighbor_year_month.columns = ['id','data']
 
     s = StringIO.StringIO()
     neighbor_year_month.to_csv(s, index=False)
@@ -60,7 +65,7 @@ def homevalue_get(year,month):
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
-@app.route('/oakland/hometopojson', methods=['GET'])
+@app.route('/oakland/homevalue/topojson', methods=['GET'])
 def hometopojson_get():
     with open (create_filepath('oakland_by_neighborhood.json'),'r') as jsonfile:
         data = jsonfile.read()
@@ -68,6 +73,35 @@ def hometopojson_get():
         response.headers['Access-Control-Allow-Origin'] = '*'
         return response
 
+
+@app.route('/oakland/race/<year>', methods=['GET'])
+def race10value_get(year):
+    """get year and return african american ratio"""
+    if int(year) >= 2010:
+        path = create_filepath('afam_ratio_10.csv')
+    else:
+        path = create_filepath('afam_ratio_00.csv')
+    tract10_df = open_race_file(path)
+
+    s = StringIO.StringIO()
+    tract10_df.to_csv(s, index=False)
+
+    response = flask.make_response(s.getvalue())
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
+@app.route('/oakland/tract/topojson/<year>', methods=['GET'])
+def tracttopojson_get(year):
+    data = ""
+    if int(year)>=2010:
+        with open (create_filepath('tract10.json'),'r') as jsonfile:
+            data = jsonfile.read()
+    else:
+        with open (create_filepath('tract00.json'),'r') as jsonfile:
+            data = jsonfile.read()
+    response = flask.make_response(data)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
 
 if __name__ == "__main__":
 	# app.debug = True

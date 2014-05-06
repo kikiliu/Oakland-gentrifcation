@@ -1,4 +1,4 @@
-﻿.neighborhood {
+﻿.region {
     fill: none;
     stroke: #ccc;
 }
@@ -9,38 +9,87 @@
     stroke-linejoin: round;
 }
 
-.q0-9 {
+.map {
+    height:700px;
+    width:40%;
+    float:left;
+    overflow:hidden;
+    border:1px solid #707070;
+    margin:10px 5px 5px 5px;
+}
+
+.blue0-9 {
     fill: rgb(247,251,255);
 }
 
-.q1-9 {
+.blue1-9 {
     fill: rgb(222,235,247);
 }
 
-.q2-9 {
+.blue2-9 {
     fill: rgb(198,219,239);
 }
 
-.q3-9 {
+.blue3-9 {
     fill: rgb(158,202,225);
 }
 
-.q4-9 {
+.blue4-9 {
     fill: rgb(107,174,214);
 }
 
-.q5-9 {
+.blue5-9 {
     fill: rgb(66,146,198);
 }
 
-.q6-9 {
+.blue6-9 {
     fill: rgb(33,113,181);
 }
 
-.q7-9 {
+.blue7-9 {
     fill: rgb(8,81,156);
 }
 
-.q8-9 {
+.blue8-9 {
     fill: rgb(8,48,107);
+}
+
+.orange0-9 {
+    fill: #FCF3D7;
+}
+
+.orange1-9 {
+    fill: #FFF0BF;
+}
+
+.orange2-9 {
+    fill: #FFE9A1;
+}
+
+.orange3-9 {
+    fill: #FFE285;
+}
+
+.orange4-9 {
+    fill: #FFDB69;
+}
+
+.orange5-9 {
+    fill: #FFD54D;
+}
+
+.orange6-9 {
+    fill: #FFCF33;
+}
+
+.orange7-9 {
+    fill: #FCC205;
+}
+
+.orange8-9 {
+    fill: #E3AD00;
+}
+
+#DateSlider {
+    width:500px;
 }
