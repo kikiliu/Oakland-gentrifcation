@@ -14,71 +14,90 @@
     <script src="http://d3js.org/queue.v1.js"></script>
     <script src="http://d3js.org/topojson.v1.js"></script>
 
-    <div id="Year"></div>
-    <div id="DateSlider" style="width:500px"></div>
-    <div id="county_map" style="height:1000px; width:100%"><svg></svg></div>
+    <div id="current_date"></div>
+    <div id="DateSlider"></div>
+    <div id="homevalue_map" class="map"><svg></svg></div>
+    <div id="race_map" class="map"><svg></svg></div>
     
     <script>
         //define slider size
-        $("#DateSlider").slider({ min: 1996 * 12 + 3, max: 2014 * 12 + 1, step: 1, change: function (event, ui) { RefreshData(parseInt(ui.value / 12), ui.value % 12 + 1); } });
+        $("#DateSlider").slider({
+            min: 1996 * 12 + 3, max: 2014 * 12 + 1, step: 1, change: function (event, ui)
+            {
+                var year = parseInt(ui.value/12);
+                var month = ui.value % 12 + 1;
 
-        //Draw the new map and then delete the old map
-        function RefreshData(year, month) {
-            month=month < 10 ? "0" + month : month
-            date=year+"-"+month;
-            $("#Year").text(date);
+                month = month < 10 ? "0" + month : month
+                date = year + "-" + month;
+                $("#current_date").text(date);
 
-            var width = $("#county_map").width(),
-                height = 1000;
+                homevalueMap.refreshData('homevalue/' + year + '/' + month, 'homevalue/topojson', 1000000, 'oakland', 'NAME', 'blue');
+                raceMap.refreshData('race/' + year, 'tract/topojson/' + year, 1, 'layer1', 'TRACTCE'+ parseInt((year%100)/10)+'0', 'orange');
+            }   
+        });
 
-            var rateByRegion = d3.map();
+        function D3Map(selector) {
+
+            //Draw the new map and then delete the old map
+            this.refreshData = function(dataUrl, topojsonUrl, max_range, obj_name, region_name, heat_color) {
 
 
-            //automatically assign domain (max 1,200,000) by D3
-            //quantize is to project continuous data to scatter, what else?
-            var quantize = d3.scale.quantize()
-                .domain([0, 1000000])
-                .range(d3.range(9).map(function (i) { return "q" + i + "-9"; }));
+                var width = $(selector).width(),
+                    height = $(selector).height();
 
-            //define the position of the map to screen, here use mercator as the display style
-            var proj = d3.geo.mercator()
-                .center([-122.20, 37.82])
-                .scale(140000);
+                var rateByRegion = d3.map();
 
-            var path = d3.geo.path().projection(proj);
 
-            var previousSvg = d3.select('#county_map').select("svg");
-            var svg = d3.select('#county_map').append("svg").attr("style", "display:none");
-            svg
-                .attr("width", width)
-                .attr("height", height);
-            //create queue instance to delay loading
-            queue()
-                .defer(d3.json, "http://people.ischool.berkeley.edu/~kikiliu/server/oakland/hometopojson")
-                //construct neighborhood: value dictionary to rateByRegion
-                .defer(d3.csv, "http://people.ischool.berkeley.edu/~kikiliu/server/oakland/" + year + "/" + month, function (d) { rateByRegion.set(d.Neighborhood, +d[date]); })//lambda each row, data to replace number, + to convert string to number
-                .await(ready);
+                //automatically assign domain (max 1,200,000) by D3
+                //quantize is to project continuous data to scatter, what else?
+                var quantize = d3.scale.quantize()
+                    .domain([0, max_range])
+                    .range(d3.range(9).map(function (i) { return heat_color + i + "-9"; }));
 
-            //oakland topojson
-            function ready(error, oak_topo) {
+                //define the position of the map to screen, here use mercator as the display style
+                var proj = d3.geo.mercator()
+                    .center([-122.15, 37.82])//[x,y]
+                    .scale(140000);
 
-                svg.append("g")
-                    .attr("class", "neighborhood")//define css
-                    .selectAll("path")//?
-                    .data(topojson.feature(oak_topo, oak_topo.objects.oakland).features)
-                    .enter().append("path")//? for each
-                    .attr("class", function (d) { if (rateByRegion.get(d.properties.NAME) === undefined) console.log(d.properties.NAME); return quantize(rateByRegion.get(d.properties.NAME)); })
-                    .attr("d", path)//?
-                    .append("svg:title")//display mouseover title
-                    .text(function (d) { return d.properties.NAME + ": $" + rateByRegion.get(d.properties.NAME); });
+                var path = d3.geo.path().projection(proj);
 
-                previousSvg.remove();
+                var previousSvg = d3.select(selector).select("svg");
+                var svg = d3.select(selector).append("svg").attr("style", "display:none");
+                svg
+                    .attr("width", width)
+                    .attr("height", height);
+                //create queue instance to delay loading
+                queue()
+                    .defer(d3.json, topojsonUrl)
+                    //construct neighborhood: value dictionary to rateByRegion
+                    .defer(d3.csv, dataUrl, function (d) {rateByRegion.set(d.id, +d.data); })//lambda each row, data to replace number, + to convert string to number
+                    .await(ready);
 
-                svg.attr("style", "");
+                //oakland topojson
+                function ready(error, topo) {
+                    
+                    svg.append("g")
+                        .attr("class", "region")//define css
+                        .selectAll("path")//line
+                        .data(topojson.feature(topo, topo.objects[obj_name]).features)
+                        .enter().append("path")//for each
+                        //if (rateByRegion.get(d.properties[region_name]) === undefined) console.log(d.properties[region_name]);
+                        .attr("class", function (d) { return quantize(rateByRegion.get(d.properties[region_name])); })
+                        .attr("d", path)
+                        .append("svg:title")//display mouseover title
+                        .text(function (d) { return d.properties[region_name] + ": $" + rateByRegion.get(d.properties[region_name]); });
+
+                    previousSvg.remove();
+
+                    svg.attr("style", "");
+                }
             }
         }
 
         //default
+
+        var homevalueMap = new D3Map("#homevalue_map");
+        var raceMap = new D3Map("#race_map");
 
         $("#DateSlider").slider("option", "value", 2014 * 12 + 1)
 
