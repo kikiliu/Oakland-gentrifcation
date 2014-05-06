@@ -20,3 +20,5 @@ Moshe pointed out that it's possible we'll lose good data if there's a tract in 
 We also talked through the racial categories. Seems like it might make sense to consider the white community = white, non-Hispanic + white, Hispanic, the Black community = Black, non-Hispanic + Black, and so forth. This will probably be controversial, but I don't want to NOT count people just because they're in multiple communities.
 
 Considering income, looks like that is collected on the SF3 form, so I need to figure out how to do census calls on that data. There is documentation for 2000 but I don't see any for 2010...will have to look further into that.
+
+Choropleth code template: http://bl.ocks.org/mbostock/4060606
